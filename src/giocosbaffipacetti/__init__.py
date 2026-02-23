@@ -7,17 +7,23 @@ import sys
 pygame.init()
 pygame.mixer.init()
 
+camera_offset = 0
+
 WIDTH = 600
 HEIGHT = 700
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tower Jump Pro")
+
+background_img = pygame.image.load("schermata_gioco.png").convert()
+background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
 clock = pygame.time.Clock()
 FPS = 60
 
 # Suoni
-# jump_sound = pygame.mixer.Sound("jump.wav")
-# gameover_sound = pygame.mixer.Sound("gameover.wav")
+jump_sound = pygame.mixer.Sound("sound_jump.mp3")
+gameover_sound = pygame.mixer.Sound("sound_gameover.mp3")
 
 # Colori
 WHITE = (255, 255, 255)
@@ -46,7 +52,10 @@ player = pygame.Rect(WIDTH // 2 - player_size // 2, HEIGHT - 100, player_size, p
 player_vel_y = 0
 gravity = 0.8
 jump_power = -15
+player_img = pygame.image.load("alieno.png").convert_alpha()
+player_img = pygame.transform.scale(player_img, (player_size, player_size))
 on_ground = False
+
 
 # Blocchi
 blocks = []
@@ -55,6 +64,9 @@ block_height = 30
 block_speed = 4
 spawn_timer = 0
 spawn_delay = 1500
+block_img = pygame.image.load("ufo.png").convert_alpha()
+block_img = pygame.transform.scale(block_img, (block_width, block_height))
+
 
 # Punteggio
 score = 0
@@ -74,21 +86,26 @@ def reset_game():
 
 def spawn_block():
     side = random.choice(["left", "right"])
-    y = HEIGHT - block_height - len(blocks) * block_height
-    
+
+    if len(blocks) == 0:
+        y = HEIGHT 
+    else:
+        last_block = blocks[-1]
+        y = last_block["rect"].y - 50  
+
     if side == "left":
         x = -block_width
         direction = 1
     else:
         x = WIDTH
         direction = -1
-    
+
     block = {
         "rect": pygame.Rect(x, y, block_width, block_height),
         "direction": direction,
         "placed": False
     }
-    
+
     blocks.append(block)
 
 def draw_text(text, font, color, x, y):
@@ -98,7 +115,7 @@ def draw_text(text, font, color, x, y):
 # Loop principale
 while True:
     dt = clock.tick(FPS)
-    screen.fill(BLACK)
+    screen.blit(background_img, (0, 0))
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -123,7 +140,7 @@ while True:
                 if event.key == pygame.K_SPACE and on_ground:
                     player_vel_y = jump_power
                     on_ground = False
-#                    jump_sound.play()
+                    jump_sound.play()
         
         # GAME OVER
         elif game_state == GAME_OVER:
@@ -151,7 +168,14 @@ while True:
             player.bottom = HEIGHT
             player_vel_y = 0
             on_ground = True
-        
+            
+        if player.y < HEIGHT // 2:
+            camera_offset = HEIGHT // 2 - player.y
+            player.y = HEIGHT // 2
+    
+            for block in blocks:
+                block["rect"].y += camera_offset
+                
         # Spawn blocchi
         spawn_timer += dt
         if spawn_timer > spawn_delay:
@@ -172,12 +196,12 @@ while True:
         
             # Collisioni
             if player.colliderect(block["rect"]):
-                if player_vel_y > 0 and player.bottom - player_vel_y <= block["rect"].top:
+                if player_vel_y > 0:
                     player.bottom = block["rect"].top
                     player_vel_y = 0
                     on_ground = True
                 else:
-#                    gameover_sound.play()
+                    gameover_sound.play()
                     game_state = GAME_OVER
         
         # Difficoltà crescente
@@ -187,9 +211,9 @@ while True:
         
         # Disegno
         for block in blocks:
-            pygame.draw.rect(screen, RED, block["rect"])
+            screen.blit(block_img, block["rect"])
         
-        pygame.draw.rect(screen, BLUE, player)
+        screen.blit(player_img, player)
         
         draw_text(f"Giocatore: {player_name}", font, WHITE, 20, 20)
         draw_text(f"Punteggio: {score}", font, WHITE, 20, 60)
