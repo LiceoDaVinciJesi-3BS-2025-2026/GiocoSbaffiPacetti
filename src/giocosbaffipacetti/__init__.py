@@ -2,6 +2,7 @@
 import pygame
 import random
 import sys
+import math
 
 pygame.init()
 pygame.mixer.init()
@@ -9,7 +10,7 @@ pygame.mixer.init()
 camera_offset = 0
 
 WIDTH = 1200
-HEIGHT = 800
+HEIGHT = 700 #800
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SPACE JUMP")
@@ -77,10 +78,15 @@ block_img = pygame.transform.scale(block_img, (block_width, block_height))
 # Punteggio
 score = 0
 level = 1
+score_saved = False
+leaderboard = []
+MAX_SCORES = 10
 
 def reset_game():
     global blocks, score, level, block_speed, spawn_delay
     global player, player_vel_y, on_ground
+    global score_saved
+    
     blocks = []
     score = 0
     level = 1
@@ -89,6 +95,7 @@ def reset_game():
     player.y = HEIGHT - 100
     player_vel_y = 0
     on_ground = False
+    score_saved = False
 
 def spawn_block():
     side = random.choice(["left", "right"])
@@ -113,17 +120,43 @@ def spawn_block():
     }
 
     blocks.append(block)
-
+    
 def draw_text(text, font, color, x, y):
     img = font.render(text, True, color)
     screen.blit(img, (x, y))
     
+def load_leaderboard():
+    global leaderboard
+    leaderboard = []
+    try:
+        with open("classifica.txt", "r") as f:
+            for line in f:
+                line = line.strip()
+                if "," in line:
+                    name, score = line.strip().split(",")
+                    leaderboard.append((name, int(score)))
+    except FileNotFoundError:
+        pass
+
+def save_leaderboard():
+    with open("classifica.txt", "w") as f:
+        for name, score in leaderboard:
+            f.write(f"{name},{score}\n")
+
+def update_leaderboard(name, score):
+    global leaderboard
+    leaderboard.append((name, score))
+    leaderboard = sorted(leaderboard, key=lambda x: x[1], reverse=True)
+    leaderboard = leaderboard[:MAX_SCORES]
+    save_leaderboard()    
     
 def main():
     global game_state, player_name
     global player_vel_y, on_ground
     global spawn_timer, camera_offset
     global score, level, block_speed, spawn_delay
+    load_leaderboard()
+    global score_saved
     while True:
         dt = clock.tick(FPS)
         screen.blit(background_img, (0, 0))
@@ -236,7 +269,10 @@ def main():
                         player_vel_y = 0
                         on_ground = True
                     else:
-                        gameover_sound.play()
+                        if not score_saved:
+                             gameover_sound.play()
+                             update_leaderboard(player_name, score)
+                             score_saved = True
                         game_state = GAME_OVER
             
             # Difficoltà crescente
@@ -296,10 +332,18 @@ def main():
 
         # ===== GAME OVER =====
         elif game_state == GAME_OVER:
-            draw_text("GAME OVER", font_big, RED, WIDTH//2 - 150, 200)
-            draw_text(f"Giocatore: {player_name}", font, WHITE, WIDTH//2 - 120, 300)
-            draw_text(f"Punteggio finale: {score}", font, WHITE, WIDTH//2 - 140, 350)
-            draw_text("Premi ENTER per tornare al menu", font, WHITE, WIDTH//2 - 220, 450)
+            draw_text("GAME OVER", font_big, RED, WIDTH//2 - 150, 150)
+            draw_text(f"Giocatore: {player_name}", font, WHITE, WIDTH//2 - 120, 230)
+            draw_text(f"Punteggio finale: {score}", font, WHITE, WIDTH//2 - 140, 270)
+
+            draw_text("CLASSIFICA", font_big, BLUE, WIDTH//2 - 150, 330)
+
+            y_offset = 400
+            for i, (name, scr) in enumerate(leaderboard):
+                draw_text(f"{i+1}. {name} - {scr}", font, WHITE, WIDTH//2 - 150, y_offset)
+                y_offset += 35
+
+            draw_text("Premi ENTER per tornare al menu", font, WHITE, WIDTH//2 - 220, HEIGHT - 80)
         
         pygame.display.flip()
        
