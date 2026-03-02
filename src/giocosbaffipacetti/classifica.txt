@@ -1,5 +1,10 @@
+ciaooo,450
+ciao,440
+ciao,390
 l,230
+ciao,120
 cvy,40
+xiao,40
 l,30
-,30
-,10
+,30
+ciao,30

@@ -40,11 +40,15 @@ font = pygame.font.SysFont(None, 40)
 pause_button = pygame.Rect(WIDTH - 80, 20, 50, 50)
 DARK_OVERLAY = (0, 0, 0, 150)
 
+# pulsante classifica
+leaderboard_button = pygame.Rect(WIDTH//2 - 100, 450, 200, 50)
+
 # Stati gioco
 MENU = 0
 PLAYING = 1
 GAME_OVER = 2
 PAUSED = 3
+LEADERBOARD = 4
 game_state = MENU
 
 # Nome giocatore
@@ -169,14 +173,19 @@ def main():
             # MENU
             if game_state == MENU:
                 if event.type == pygame.KEYDOWN and active_input:
-                    if event.key == pygame.K_RETURN and player_name != "":
-                        reset_game()
-                        game_state = PLAYING
+                    if event.key == pygame.K_RETURN:
+                        if player_name != "":
+                            reset_game()
+                            game_state = PLAYING
                     elif event.key == pygame.K_BACKSPACE:
                         player_name = player_name[:-1]
                     else:
                         if len(player_name) < 12:
                             player_name += event.unicode
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if leaderboard_button.collidepoint(event.pos):
+                        game_state = LEADERBOARD
+
             
             # GIOCO
             elif game_state == PLAYING:
@@ -215,7 +224,11 @@ def main():
                         if pause_button.collidepoint(event.pos):
                             game_state = PLAYING
 
-
+        # ===== CLASSIFICA =====
+            elif game_state == LEADERBOARD:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        game_state = MENU
 
         # ===== MENU =====
         if game_state == MENU:
@@ -224,7 +237,9 @@ def main():
             pygame.draw.rect(screen, GRAY, (WIDTH//2 - 150, 300, 300, 50), 2)
             draw_text(player_name, font, WHITE, WIDTH//2 - 140, 310)
             draw_text("Premi ENTER per iniziare", font, WHITE, WIDTH//2 - 180, 380)
-        
+            pygame.draw.rect(screen, BLUE, leaderboard_button, border_radius=12)
+            draw_text("CLASSIFICA", font, WHITE, leaderboard_button.x + 30, leaderboard_button.y + 15)
+
         # ===== GIOCO =====
         elif game_state == PLAYING:
             
@@ -335,16 +350,19 @@ def main():
             draw_text("GAME OVER", font_big, RED, WIDTH//2 - 150, 150)
             draw_text(f"Giocatore: {player_name}", font, WHITE, WIDTH//2 - 120, 230)
             draw_text(f"Punteggio finale: {score}", font, WHITE, WIDTH//2 - 140, 270)
+            draw_text("Premi ENTER per tornare al menu", font, WHITE, WIDTH//2 - 220, HEIGHT - 80)
+  
+          # ===== CLASSIFICA =====
+        elif game_state == LEADERBOARD:
 
-            draw_text("CLASSIFICA", font_big, BLUE, WIDTH//2 - 150, 330)
-
-            y_offset = 400
+            draw_text("CLASSIFICA", font_big, BLUE, WIDTH//2 - 150, 150)
+            y_offset = 250
             for i, (name, scr) in enumerate(leaderboard):
                 draw_text(f"{i+1}. {name} - {scr}", font, WHITE, WIDTH//2 - 150, y_offset)
-                y_offset += 35
+                y_offset += 40
 
-            draw_text("Premi ENTER per tornare al menu", font, WHITE, WIDTH//2 - 220, HEIGHT - 80)
-        
+            draw_text("Premi ESC per tornare al menu", font, WHITE, WIDTH//2 - 200, HEIGHT - 80)
+
         pygame.display.flip()
        
 if __name__ == "__main__":
