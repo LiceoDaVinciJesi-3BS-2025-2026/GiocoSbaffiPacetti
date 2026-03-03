@@ -10,7 +10,7 @@ pygame.mixer.init()
 camera_offset = 0
 
 WIDTH = 1200
-HEIGHT = 700 #800
+HEIGHT = 800
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SPACE JUMP")
@@ -50,6 +50,7 @@ GAME_OVER = 2
 PAUSED = 3
 LEADERBOARD = 4
 game_state = MENU
+last_block_spawned = None
 
 # Nome giocatore
 player_name = ""
@@ -74,7 +75,9 @@ block_height = 40
 block_speed = 4
 spawn_timer = 0
 spawn_delay = 1500
+next_spawn_time = random.randint(800, 2000)
 block_img = pygame.image.load("ufo.png").convert_alpha()
+
 
 block_img = pygame.transform.scale(block_img, (block_width, block_height))
 
@@ -87,11 +90,12 @@ leaderboard = []
 MAX_SCORES = 10
 
 def reset_game():
-    global blocks, score, level, block_speed, spawn_delay
+    global blocks, score, level, block_speed, spawn_delay, next_spawn_time
     global player, player_vel_y, on_ground
     global score_saved
     
     blocks = []
+    last_block_spawned = None
     score = 0
     level = 1
     block_speed = 4
@@ -100,30 +104,38 @@ def reset_game():
     player_vel_y = 0
     on_ground = False
     score_saved = False
+    next_spawn_time = random.randint(800, 2000)
+    
+    spawn_block()
 
 def spawn_block():
     side = random.choice(["left", "right"])
 
     if len(blocks) == 0:
-        y = HEIGHT 
+        y = HEIGHT - 50
     else:
         last_block = blocks[-1]
         y = last_block["rect"].y - 50  
 
     if side == "left":
-        x = -block_width
+        x = 0
         direction = 1
     else:
         x = WIDTH
         direction = -1
+        
+    block_type = random.choice(["normal", "moving"])
 
     block = {
         "rect": pygame.Rect(x, y, block_width, block_height),
         "direction": direction,
-        "placed": False
+        "placed": False,
+        "type": block_type
     }
 
     blocks.append(block)
+    last_block_spawned = block
+    return block
     
 def draw_text(text, font, color, x, y):
     img = font.render(text, True, color)
@@ -157,7 +169,7 @@ def update_leaderboard(name, score):
 def main():
     global game_state, player_name
     global player_vel_y, on_ground
-    global spawn_timer, camera_offset
+    global spawn_timer, camera_offset, next_spawn_time
     global score, level, block_speed, spawn_delay
     load_leaderboard()
     global score_saved
@@ -238,7 +250,7 @@ def main():
             draw_text(player_name, font, WHITE, WIDTH//2 - 140, 310)
             draw_text("Premi ENTER per iniziare", font, WHITE, WIDTH//2 - 180, 380)
             pygame.draw.rect(screen, BLUE, leaderboard_button, border_radius=12)
-            draw_text("CLASSIFICA", font, WHITE, leaderboard_button.x + 30, leaderboard_button.y + 15)
+            draw_text("CLASSIFICA", font, WHITE, leaderboard_button.x + 20, leaderboard_button.y + 12.5)
 
         # ===== GIOCO =====
         elif game_state == PLAYING:
@@ -258,41 +270,56 @@ def main():
         
                 for block in blocks:
                     block["rect"].y += camera_offset
-                    
-            # Spawn blocchi
-            spawn_timer += dt
-            if spawn_timer > spawn_delay:
-                spawn_block()
-                spawn_timer = 0
             
             # Movimento blocchi
             for block in blocks:
-                if not block["placed"]:
+
+                    # Movimento solo blocchi mobili
+                if block["type"] == "moving":
                     block["rect"].x += block["direction"] * block_speed
-                    
-                    if (block["direction"] == 1 and block["rect"].x >= WIDTH//2 - block_width//2) or \
-                       (block["direction"] == -1 and block["rect"].x <= WIDTH//2 - block_width//2):
-                        
-                        block["rect"].x = WIDTH//2 - block_width//2
-                        block["placed"] = True
-                        score += 10
-            
-                # Collisioni
+
+                    # Rimbalzo ai bordi
+                    if block["rect"].left <= 0:
+                        block["rect"].left = 0
+                        block["direction"] = 1
+                    if block["rect"].right >= WIDTH:
+                        block["rect"].right = WIDTH
+                        block["direction"] = -1
+
+                # Collisioni con il giocatore
                 if player.colliderect(block["rect"]):
                     if player_vel_y > 0:
+                        # Atterra sul blocco
                         player.bottom = block["rect"].top
                         player_vel_y = 0
                         on_ground = True
+
+                        # Se blocco è mobile, trasporta il giocatore
+                        if block["type"] == "moving":
+                            player.x += block["direction"] * block_speed
+                            if player.left < 0:
+                                player.left = 0
+                            if player.right > WIDTH:
+                                player.right = WIDTH
+
+                        # Segna blocco come "placed" e genera il prossimo
+                        if not block["placed"]:
+                            block["placed"] = True
+                            score += 10
                     else:
+                        # Colpito da sotto -> GAME OVER
                         if not score_saved:
-                             gameover_sound.play()
-                             update_leaderboard(player_name, score)
-                             score_saved = True
+                            gameover_sound.play()
+                            update_leaderboard(player_name, score)
+                            score_saved = True
                         game_state = GAME_OVER
-            
+                        
+            if last_block_spawned:
+                if last_block_spawned["rect"].y < HEIGHT - 300:  # quando è abbastanza in alto
+                    spawn_block()      
             # Difficoltà crescente
-            level = score // 50 + 1
-            block_speed = 4 + level * 0.5
+            level = score // 100 + 1
+            block_speed = random.randint(2, 10) + level * 0.5
             spawn_delay = max(600, 1500 - level * 100)
             
             
@@ -308,8 +335,11 @@ def main():
             
             # Disegno
             for block in blocks:
-                screen.blit(block_img, block["rect"])
-            
+#                screen.blit(block_img, block["rect"])
+                if block["type"] == "moving":
+                    pygame.draw.rect(screen, GREEN, block["rect"])
+                else:
+                    pygame.draw.rect(screen, BLUE, block["rect"])
             screen.blit(player_img, player)
             
             draw_text(f"Giocatore: {player_name}", font, WHITE, 20, 20)
