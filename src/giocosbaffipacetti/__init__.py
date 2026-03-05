@@ -10,7 +10,7 @@ pygame.mixer.init()
 camera_offset = 0
 
 WIDTH = 1200
-HEIGHT = 800
+HEIGHT = 700 #800
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SPACE JUMP")
@@ -92,7 +92,7 @@ MAX_SCORES = 10
 def reset_game():
     global blocks, score, level, block_speed, spawn_delay, next_spawn_time
     global player, player_vel_y, on_ground
-    global score_saved
+    global score_saved, last_block_spawned
     
     blocks = []
     last_block_spawned = None
@@ -109,6 +109,8 @@ def reset_game():
     spawn_block()
 
 def spawn_block():
+    global last_block_spawned
+    
     side = random.choice(["left", "right"])
 
     if len(blocks) == 0:
@@ -135,7 +137,6 @@ def spawn_block():
 
     blocks.append(block)
     last_block_spawned = block
-    return block
     
 def draw_text(text, font, color, x, y):
     img = font.render(text, True, color)
@@ -178,66 +179,71 @@ def main():
         screen.blit(background_img, (0, 0))
         
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            
-            # MENU
+
+            # ===== MENU =====
             if game_state == MENU:
+
                 if event.type == pygame.KEYDOWN and active_input:
+
                     if event.key == pygame.K_RETURN:
                         if player_name != "":
                             reset_game()
                             game_state = PLAYING
+
                     elif event.key == pygame.K_BACKSPACE:
                         player_name = player_name[:-1]
+
                     else:
                         if len(player_name) < 12:
                             player_name += event.unicode
+
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if leaderboard_button.collidepoint(event.pos):
                         game_state = LEADERBOARD
 
-            
-            # GIOCO
+            # ===== PLAYING =====
             elif game_state == PLAYING:
+
                 if event.type == pygame.KEYDOWN:
+
                     if event.key == pygame.K_p:
                         game_state = PAUSED
+
                     if event.key == pygame.K_SPACE and on_ground:
                         player_vel_y = jump_power
                         on_ground = False
                         jump_sound.play()
+
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if pause_button.collidepoint(event.pos):
                         game_state = PAUSED
 
-                elif game_state == PAUSED:
-                    for block in blocks:
-                        screen.blit(block_img, block["rect"])
-                    screen.blit(player_img, player)
+            # ===== PAUSED =====
+            elif game_state == PAUSED:
 
-                    draw_text("PAUSA", font_big, RED, WIDTH//2 - 100, HEIGHT//2 - 50)
-                    draw_text("Premi P per continuare", font, WHITE, WIDTH//2 - 150, HEIGHT//2 + 20)
-            
-            # GAME OVER
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_p:
+                        game_state = PLAYING
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if pause_button.collidepoint(event.pos):
+                        game_state = PLAYING
+
+            # ===== GAME OVER =====
             elif game_state == GAME_OVER:
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         game_state = MENU
                         player_name = ""
-            
-            elif game_state == PAUSED:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_p:
-                        game_state = PLAYING
-                elif game_state == PAUSED:
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if pause_button.collidepoint(event.pos):
-                            game_state = PLAYING
 
-        # ===== CLASSIFICA =====
+            # ===== LEADERBOARD =====
             elif game_state == LEADERBOARD:
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         game_state = MENU
@@ -314,7 +320,7 @@ def main():
                             score_saved = True
                         game_state = GAME_OVER
                         
-            if last_block_spawned:
+            if last_block_spawned is not None:
                 if last_block_spawned["rect"].y < HEIGHT - 300:  # quando è abbastanza in alto
                     spawn_block()      
             # Difficoltà crescente
