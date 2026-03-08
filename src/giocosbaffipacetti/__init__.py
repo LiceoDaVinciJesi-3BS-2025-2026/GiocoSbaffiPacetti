@@ -1,8 +1,8 @@
+# GIOCO SBAFFI E PACETTI
 
 import pygame
 import random
 import sys
-import math
 
 # Inizializza pygame e il sistema audio
 pygame.init()
@@ -34,9 +34,6 @@ gameover_sound = pygame.mixer.Sound("sound_gameover.mp3")
 # Colori
 WHITE = (255, 255, 255)
 BLUE = (50, 150, 255)
-RED = (200, 50, 50)
-BLACK = (20, 20, 20)
-GREEN = (50, 200, 50)
 GRAY = (100, 100, 100)
 GOLD = (255, 215, 0)
 SILVER = (192, 192, 192)
@@ -146,7 +143,7 @@ def reset_game():
 
 # GENERAZIONE BLOCCO
 def spawn_block():
-     """
+    """
     Genera un nuovo blocco.
     Il lato di spawn dipende dal blocco precedente.
     """
