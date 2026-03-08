@@ -32,6 +32,9 @@ RED = (200, 50, 50)
 BLACK = (20, 20, 20)
 GREEN = (50, 200, 50)
 GRAY = (100, 100, 100)
+GOLD = (255, 215, 0)
+SILVER = (192, 192, 192)
+BRONZE = (205, 127, 50)
 
 font_big = pygame.font.SysFont(None, 60)
 font = pygame.font.SysFont(None, 40)
@@ -62,7 +65,7 @@ player_height = 150
 player = pygame.Rect(WIDTH // 2 - player_width // 2, HEIGHT - 100, player_width, player_height)
 player_vel_y = 0
 gravity = 0.8
-jump_power = -15
+jump_power = -13
 player_img = pygame.image.load("alieno.png").convert_alpha()
 player_img = pygame.transform.scale(player_img, (player_width, player_height))
 on_ground = False
@@ -74,7 +77,7 @@ block_width = 150
 block_height = 40
 block_speed = 4
 spawn_timer = 0
-spawn_delay = 7000
+spawn_delay = 2000
 spawn_next_on_center = False
 block_to_watch = None
 waiting_for_spawn = False
@@ -90,11 +93,12 @@ level = 1
 score_saved = False
 leaderboard = []
 MAX_SCORES = 10
+first_jump_done = False
 
 def reset_game():
     global blocks, score, level, block_speed, spawn_delay, next_spawn_time
     global player, player_vel_y, on_ground
-    global score_saved, last_block_spawned
+    global score_saved, last_block_spawned, first_jump_done 
     
     blocks = []
     last_block_spawned = None
@@ -107,6 +111,7 @@ def reset_game():
     player_vel_y = 0
     on_ground = False
     score_saved = False
+    first_jump_done = False 
     next_spawn_time = random.randint(800, 2000)
     
     spawn_block()
@@ -176,10 +181,23 @@ def save_leaderboard():
 
 def update_leaderboard(name, score):
     global leaderboard
-    leaderboard.append((name, score))
+
+    found = False
+
+    for i, (n, s) in enumerate(leaderboard):
+        if n == name:
+            found = True
+            if score > s:  # aggiorna solo se il nuovo punteggio è migliore
+                leaderboard[i] = (name, score)
+            break
+
+    if not found:
+        leaderboard.append((name, score))
+
     leaderboard = sorted(leaderboard, key=lambda x: x[1], reverse=True)
     leaderboard = leaderboard[:MAX_SCORES]
-    save_leaderboard()    
+
+    save_leaderboard()  
     
 def main():
     global game_state, player_name
@@ -187,7 +205,7 @@ def main():
     global spawn_timer, camera_offset, next_spawn_time
     global score, level, block_speed, spawn_delay
     global waiting_for_spawn, spawn_next_on_center, block_to_watch
-    global score_saved
+    global score_saved, first_jump_done
     while True:
         dt = clock.tick(FPS)
         screen.blit(background_img, (0, 0))
@@ -230,6 +248,7 @@ def main():
                     if event.key == pygame.K_SPACE and on_ground:
                         player_vel_y = jump_power
                         on_ground = False
+                        first_jump_done = True 
                         jump_sound.play()
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -253,7 +272,6 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         game_state = MENU
-                        player_name = ""
 
             # ===== LEADERBOARD =====
             elif game_state == LEADERBOARD:
@@ -280,9 +298,16 @@ def main():
             player.y += player_vel_y
             
             if player.bottom >= HEIGHT:
-                player.bottom = HEIGHT
-                player_vel_y = 0
-                on_ground = True
+                if first_jump_done:
+                    if not score_saved:
+                        gameover_sound.play()
+                        update_leaderboard(player_name, score)
+                        score_saved = True
+                    game_state = GAME_OVER
+                else:
+                    player.bottom = HEIGHT
+                    player_vel_y = 0
+                    on_ground = True
                 
             if player.y < HEIGHT // 2:
                 camera_offset = HEIGHT // 2 - player.y
@@ -363,7 +388,7 @@ def main():
    
             # Difficoltà crescente
             level = score // 100 + 1
-            block_speed = 4 + level * 0.5
+            block_speed = random.randint(2, 10) + level * 0.5
             spawn_delay = max(600, 1500 - level * 100)
             
             
@@ -431,15 +456,33 @@ def main():
         elif game_state == LEADERBOARD:
 
             draw_text("CLASSIFICA", font_big, BLUE, WIDTH//2 - 150, 150)
-            y_offset = 250
-            for i, (name, scr) in enumerate(leaderboard):
-                draw_text(f"{i+1}. {name} - {scr}", font, WHITE, WIDTH//2 - 150, y_offset)
-                y_offset += 40
+            y_offset = 225
+            
+            for i in range(10):
 
-            draw_text("Premi ESC per tornare al menu", font, WHITE, WIDTH//2 - 200, HEIGHT - 80)
+                if i < len(leaderboard):
+                    name, scr = leaderboard[i]
+                    text = f"{i+1}. {name} - {scr}"
+                else:
+                    text = f"{i+1}. ---"
+
+                # Colori podio
+                if i == 0:
+                    color = GOLD
+                elif i == 1:
+                    color = SILVER
+                elif i == 2:
+                    color = BRONZE
+                else:
+                    color = WHITE
+
+                draw_text(text, font, color, WIDTH//2 - 150, y_offset)
+                y_offset += 40
+            draw_text("Premi ESC per tornare al menu", font, WHITE, WIDTH//2 - 200, HEIGHT - 50)
 
         pygame.display.flip()
        
 if __name__ == "__main__":
+    load_leaderboard()
     main()
     
