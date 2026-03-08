@@ -384,11 +384,11 @@ def main():
             # Movimento blocchi
             for block in blocks:
 
-                # blocchi verdi si muovono sempre
+                # blocchi normali si muovono sempre
                 if block["type"] == "moving":
                     block["rect"].x += block["direction"] * block_speed
 
-                # blocchi blu si muovono solo finché non li usi
+                # blocchi appiccicosi si muovono solo finché non li usi
                 elif block["type"] == "normal" and not block["placed"]:
                     block["rect"].x += block["direction"] * block_speed
 
@@ -449,10 +449,7 @@ def main():
             # Icona pausa (due linee)
             pygame.draw.rect(screen, WHITE, (pause_button.x + 15, pause_button.y + 12, 6, 25))
             pygame.draw.rect(screen, WHITE, (pause_button.x + 29, pause_button.y + 12, 6, 25))
-
-
-
-            
+     
             # Disegno
             for block in blocks:
 
