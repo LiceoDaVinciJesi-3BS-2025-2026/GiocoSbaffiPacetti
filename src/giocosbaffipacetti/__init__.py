@@ -74,13 +74,15 @@ block_width = 150
 block_height = 40
 block_speed = 4
 spawn_timer = 0
-spawn_delay = 1500
+spawn_delay = 7000
+spawn_next_on_center = False
+block_to_watch = None
+waiting_for_spawn = False
 next_spawn_time = random.randint(800, 2000)
 block_img = pygame.image.load("ufo.png").convert_alpha()
-
-
 block_img = pygame.transform.scale(block_img, (block_width, block_height))
-
+block_img_appiccicoso = pygame.image.load("ufo_appiccicoso.png").convert_alpha()
+block_img_appiccicoso = pygame.transform.scale(block_img_appiccicoso, (block_width, block_height))
 
 # Punteggio
 score = 0
@@ -101,6 +103,7 @@ def reset_game():
     block_speed = 4
     spawn_delay = 1500
     player.y = HEIGHT - 100
+    player.x = WIDTH // 2 - player_width // 2
     player_vel_y = 0
     on_ground = False
     score_saved = False
@@ -110,22 +113,33 @@ def reset_game():
 
 def spawn_block():
     global last_block_spawned
-    
-    side = random.choice(["left", "right"])
 
+    # Determina lato di spawn
+    if last_block_spawned and last_block_spawned["type"] == "moving":
+        # Blocchi moving -> spawn dal lato opposto della direzione dell'ultimo blocco
+        if last_block_spawned["direction"] == 1:
+            x = WIDTH - block_width
+            direction = -1
+        else:
+            x = 0
+            direction = 1
+    else:
+        # Spawn casuale se non ci sono blocchi o blocco normale
+        side = random.choice(["left", "right"])
+        if side == "left":
+            x = 0
+            direction = 1
+        else:
+            x = WIDTH - block_width
+            direction = -1
+
+    # Altezza del nuovo blocco
     if len(blocks) == 0:
         y = HEIGHT - 50
     else:
         last_block = blocks[-1]
         y = last_block["rect"].y - 50  
 
-    if side == "left":
-        x = 0
-        direction = 1
-    else:
-        x = WIDTH
-        direction = -1
-        
     block_type = random.choice(["normal", "moving"])
 
     block = {
@@ -172,7 +186,7 @@ def main():
     global player_vel_y, on_ground
     global spawn_timer, camera_offset, next_spawn_time
     global score, level, block_speed, spawn_delay
-    load_leaderboard()
+    global waiting_for_spawn, spawn_next_on_center, block_to_watch
     global score_saved
     while True:
         dt = clock.tick(FPS)
@@ -276,21 +290,41 @@ def main():
         
                 for block in blocks:
                     block["rect"].y += camera_offset
+                    
+            if spawn_next_on_center and block_to_watch is not None:
+                block_center_x = block_to_watch["rect"].x + block_width // 2
+                if abs(block_center_x - WIDTH // 2) < 5:  # centro ±5 px
+                    spawn_block()
+                    spawn_next_on_center = False
+                    block_to_watch = None
+                    
+            if waiting_for_spawn:
+                spawn_timer += dt
+
+                if spawn_timer >= spawn_delay:
+                    spawn_block()
+                    waiting_for_spawn = False
             
             # Movimento blocchi
             for block in blocks:
 
-                    # Movimento solo blocchi mobili
+                # blocchi verdi si muovono sempre
                 if block["type"] == "moving":
                     block["rect"].x += block["direction"] * block_speed
 
-                    # Rimbalzo ai bordi
-                    if block["rect"].left <= 0:
-                        block["rect"].left = 0
-                        block["direction"] = 1
-                    if block["rect"].right >= WIDTH:
-                        block["rect"].right = WIDTH
-                        block["direction"] = -1
+                # blocchi blu si muovono solo finché non li usi
+                elif block["type"] == "normal" and not block["placed"]:
+                    block["rect"].x += block["direction"] * block_speed
+
+
+                # rimbalzo ai bordi
+                if block["rect"].left <= 0:
+                    block["rect"].left = 0
+                    block["direction"] = 1
+
+                if block["rect"].right >= WIDTH:
+                    block["rect"].right = WIDTH
+                    block["direction"] = -1
 
                 # Collisioni con il giocatore
                 if player.colliderect(block["rect"]):
@@ -312,6 +346,13 @@ def main():
                         if not block["placed"]:
                             block["placed"] = True
                             score += 10
+                            if block["type"] == "normal":
+                                waiting_for_spawn = True
+                                spawn_timer = 0
+                            elif block["type"] == "moving":
+                                spawn_next_on_center = True
+                                block_to_watch = block
+
                     else:
                         # Colpito da sotto -> GAME OVER
                         if not score_saved:
@@ -319,13 +360,10 @@ def main():
                             update_leaderboard(player_name, score)
                             score_saved = True
                         game_state = GAME_OVER
-                        
-            if last_block_spawned is not None:
-                if last_block_spawned["rect"].y < HEIGHT - 300:  # quando è abbastanza in alto
-                    spawn_block()      
+   
             # Difficoltà crescente
             level = score // 100 + 1
-            block_speed = random.randint(2, 10) + level * 0.5
+            block_speed = 4 + level * 0.5
             spawn_delay = max(600, 1500 - level * 100)
             
             
@@ -341,11 +379,12 @@ def main():
             
             # Disegno
             for block in blocks:
-#                screen.blit(block_img, block["rect"])
+
                 if block["type"] == "moving":
-                    pygame.draw.rect(screen, GREEN, block["rect"])
+                    screen.blit(block_img, block["rect"])
                 else:
-                    pygame.draw.rect(screen, BLUE, block["rect"])
+                    screen.blit(block_img_appiccicoso, block["rect"])
+                    
             screen.blit(player_img, player)
             
             draw_text(f"Giocatore: {player_name}", font, WHITE, 20, 20)
