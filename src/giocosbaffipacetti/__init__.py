@@ -4,20 +4,26 @@ import random
 import sys
 import math
 
+# Inizializza pygame e il sistema audio
 pygame.init()
 pygame.mixer.init()
 
+# Offset della camera (serve per far salire la visuale quando il player sale)
 camera_offset = 0
 
+# Dimensioni finestra
 WIDTH = 1200
-HEIGHT = 700 #800
+HEIGHT = 700 
 
+# Creazione finestra di gioco
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SPACE JUMP")
 
+# Caricamento e ridimensionamento dello sfondo
 background_img = pygame.image.load("schermata_gioco.png").convert()
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
+# Clock per gestire gli FPS
 clock = pygame.time.Clock()
 FPS = 60
 
@@ -36,6 +42,7 @@ GOLD = (255, 215, 0)
 SILVER = (192, 192, 192)
 BRONZE = (205, 127, 50)
 
+# Font utilizzati nel gioco
 font_big = pygame.font.SysFont(None, 60)
 font = pygame.font.SysFont(None, 40)
 
@@ -59,19 +66,29 @@ last_block_spawned = None
 player_name = ""
 active_input = True
 
-# Giocatore
+# ===== GIOCATORE =====
 player_width = 50
 player_height = 150
+
+# Rettangolo che rappresenta il giocatore
 player = pygame.Rect(WIDTH // 2 - player_width // 2, HEIGHT - 100, player_width, player_height)
+
+# Velocità verticale
 player_vel_y = 0
+
+# Gravità
 gravity = 0.8
+
+# Forza del salto
 jump_power = -13
+
+# Immagine del player
 player_img = pygame.image.load("alieno.png").convert_alpha()
 player_img = pygame.transform.scale(player_img, (player_width, player_height))
 on_ground = False
 
-
-# Blocchi
+ 
+# ===== BLOCCHI / PIATTAFORME =====
 blocks = []
 block_width = 150
 block_height = 40
@@ -82,20 +99,29 @@ spawn_next_on_center = False
 block_to_watch = None
 waiting_for_spawn = False
 next_spawn_time = random.randint(800, 2000)
+
+# Immagini blocchi
 block_img = pygame.image.load("ufo.png").convert_alpha()
 block_img = pygame.transform.scale(block_img, (block_width, block_height))
 block_img_appiccicoso = pygame.image.load("ufo_appiccicoso.png").convert_alpha()
 block_img_appiccicoso = pygame.transform.scale(block_img_appiccicoso, (block_width, block_height))
 
-# Punteggio
+# ===== PUNTEGGIO =====
 score = 0
 level = 1
 score_saved = False
+
+# Classifica
 leaderboard = []
 MAX_SCORES = 10
 first_jump_done = False
 
+# RESET DEL GIOCO
 def reset_game():
+    """
+    Ripristina tutte le variabili del gioco
+    quando si inizia una nuova partita
+    """
     global blocks, score, level, block_speed, spawn_delay, next_spawn_time
     global player, player_vel_y, on_ground
     global score_saved, last_block_spawned, first_jump_done 
@@ -106,6 +132,8 @@ def reset_game():
     level = 1
     block_speed = 4
     spawn_delay = 1500
+    
+    # Riposiziona il player
     player.y = HEIGHT - 100
     player.x = WIDTH // 2 - player_width // 2
     player_vel_y = 0
@@ -116,7 +144,12 @@ def reset_game():
     
     spawn_block()
 
+# GENERAZIONE BLOCCO
 def spawn_block():
+     """
+    Genera un nuovo blocco.
+    Il lato di spawn dipende dal blocco precedente.
+    """
     global last_block_spawned
 
     # Determina lato di spawn
@@ -156,12 +189,18 @@ def spawn_block():
 
     blocks.append(block)
     last_block_spawned = block
-    
+
+# DISEGNO TESTO
 def draw_text(text, font, color, x, y):
+    """Disegna testo sullo schermo"""
     img = font.render(text, True, color)
     screen.blit(img, (x, y))
-    
+
+# CARICAMENTO CLASSIFICA
 def load_leaderboard():
+    """
+    Carica la classifica dal file classifica.txt
+    """
     global leaderboard
     leaderboard = []
     try:
@@ -174,12 +213,19 @@ def load_leaderboard():
     except FileNotFoundError:
         pass
 
+# SALVATAGGIO CLASSIFICA
 def save_leaderboard():
     with open("classifica.txt", "w") as f:
         for name, score in leaderboard:
             f.write(f"{name},{score}\n")
 
+# AGGIORNA CLASSIFICA
 def update_leaderboard(name, score):
+    """
+    Aggiorna la classifica:
+    - se il giocatore esiste aggiorna il punteggio
+    - se non esiste lo aggiunge
+    """
     global leaderboard
 
     found = False
@@ -193,12 +239,16 @@ def update_leaderboard(name, score):
 
     if not found:
         leaderboard.append((name, score))
-
+        
+    # Ordina classifica
     leaderboard = sorted(leaderboard, key=lambda x: x[1], reverse=True)
+    
+    # Mantieni solo i primi 10
     leaderboard = leaderboard[:MAX_SCORES]
 
     save_leaderboard()  
-    
+
+# CICLO PRINCIPALE DEL GIOCO
 def main():
     global game_state, player_name
     global player_vel_y, on_ground
@@ -210,6 +260,7 @@ def main():
         dt = clock.tick(FPS)
         screen.blit(background_img, (0, 0))
         
+        # EVENTI INPUT
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -218,7 +269,8 @@ def main():
 
             # ===== MENU =====
             if game_state == MENU:
-
+                
+                # Input nome giocatore
                 if event.type == pygame.KEYDOWN and active_input:
 
                     if event.key == pygame.K_RETURN:
@@ -242,9 +294,11 @@ def main():
 
                 if event.type == pygame.KEYDOWN:
 
+                    # Pausa
                     if event.key == pygame.K_p:
                         game_state = PAUSED
 
+                    # Salto
                     if event.key == pygame.K_SPACE and on_ground:
                         player_vel_y = jump_power
                         on_ground = False
@@ -255,7 +309,7 @@ def main():
                     if pause_button.collidepoint(event.pos):
                         game_state = PAUSED
 
-            # ===== PAUSED =====
+            # ===== PAUSA =====
             elif game_state == PAUSED:
 
                 if event.type == pygame.KEYDOWN:
@@ -273,7 +327,7 @@ def main():
                     if event.key == pygame.K_RETURN:
                         game_state = MENU
 
-            # ===== LEADERBOARD =====
+            # ===== CLASSIFICA =====
             elif game_state == LEADERBOARD:
 
                 if event.type == pygame.KEYDOWN:
