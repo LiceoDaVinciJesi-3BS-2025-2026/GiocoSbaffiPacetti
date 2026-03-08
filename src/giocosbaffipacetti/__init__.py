@@ -34,6 +34,7 @@ gameover_sound = pygame.mixer.Sound("sound_gameover.mp3")
 # Colori
 WHITE = (255, 255, 255)
 BLUE = (50, 150, 255)
+RED = (200, 50, 50)
 GRAY = (100, 100, 100)
 GOLD = (255, 215, 0)
 SILVER = (192, 192, 192)
@@ -61,7 +62,6 @@ last_block_spawned = None
 
 # Nome giocatore
 player_name = ""
-active_input = True
 
 # ===== GIOCATORE =====
 player_width = 50
@@ -268,7 +268,7 @@ def main():
             if game_state == MENU:
                 
                 # Input nome giocatore
-                if event.type == pygame.KEYDOWN and active_input:
+                if event.type == pygame.KEYDOWN:
 
                     if event.key == pygame.K_RETURN:
                         if player_name != "":
