@@ -13,7 +13,7 @@ camera_offset = 0
 
 # Dimensioni finestra
 WIDTH = 1200
-HEIGHT = 700 
+HEIGHT = 700
 
 # Creazione finestra di gioco
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -84,7 +84,7 @@ player_img = pygame.image.load("alieno.png").convert_alpha()
 player_img = pygame.transform.scale(player_img, (player_width, player_height))
 on_ground = False
 
- 
+
 # ===== BLOCCHI / PIATTAFORME =====
 blocks = []
 block_width = 150
@@ -121,24 +121,24 @@ def reset_game():
     """
     global blocks, score, level, block_speed, spawn_delay, next_spawn_time
     global player, player_vel_y, on_ground
-    global score_saved, last_block_spawned, first_jump_done 
-    
+    global score_saved, last_block_spawned, first_jump_done
+
     blocks = []
     last_block_spawned = None
     score = 0
     level = 1
     block_speed = 4
     spawn_delay = 1500
-    
+
     # Riposiziona il player
     player.y = HEIGHT - 100
     player.x = WIDTH // 2 - player_width // 2
     player_vel_y = 0
     on_ground = False
     score_saved = False
-    first_jump_done = False 
+    first_jump_done = False
     next_spawn_time = random.randint(800, 2000)
-    
+
     spawn_block()
 
 # GENERAZIONE BLOCCO
@@ -173,7 +173,7 @@ def spawn_block():
         y = HEIGHT - 50
     else:
         last_block = blocks[-1]
-        y = last_block["rect"].y - 50  
+        y = last_block["rect"].y - 50
 
     block_type = random.choice(["normal", "moving"])
 
@@ -236,14 +236,14 @@ def update_leaderboard(name, score):
 
     if not found:
         leaderboard.append((name, score))
-        
+
     # Ordina classifica
     leaderboard = sorted(leaderboard, key=lambda x: x[1], reverse=True)
-    
+
     # Mantieni solo i primi 10
     leaderboard = leaderboard[:MAX_SCORES]
 
-    save_leaderboard()  
+    save_leaderboard()
 
 # CICLO PRINCIPALE DEL GIOCO
 def main():
@@ -256,7 +256,7 @@ def main():
     while True:
         dt = clock.tick(FPS)
         screen.blit(background_img, (0, 0))
-        
+
         # EVENTI INPUT
         for event in pygame.event.get():
 
@@ -266,7 +266,7 @@ def main():
 
             # ===== MENU =====
             if game_state == MENU:
-                
+
                 # Input nome giocatore
                 if event.type == pygame.KEYDOWN:
 
@@ -299,7 +299,7 @@ def main():
                     if event.key == pygame.K_SPACE and on_ground:
                         player_vel_y = jump_power
                         on_ground = False
-                        first_jump_done = True 
+                        first_jump_done = True
                         jump_sound.play()
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -343,11 +343,11 @@ def main():
 
         # ===== GIOCO =====
         elif game_state == PLAYING:
-            
+
             # Gravità
             player_vel_y += gravity
             player.y += player_vel_y
-            
+
             if player.bottom >= HEIGHT:
                 if first_jump_done:
                     if not score_saved:
@@ -359,28 +359,28 @@ def main():
                     player.bottom = HEIGHT
                     player_vel_y = 0
                     on_ground = True
-                
+
             if player.y < HEIGHT // 2:
                 camera_offset = HEIGHT // 2 - player.y
                 player.y = HEIGHT // 2
-        
+
                 for block in blocks:
                     block["rect"].y += camera_offset
-                    
+
             if spawn_next_on_center and block_to_watch is not None:
                 block_center_x = block_to_watch["rect"].x + block_width // 2
                 if abs(block_center_x - WIDTH // 2) < 5:  # centro ±5 px
                     spawn_block()
                     spawn_next_on_center = False
                     block_to_watch = None
-                    
+
             if waiting_for_spawn:
                 spawn_timer += dt
 
                 if spawn_timer >= spawn_delay:
                     spawn_block()
                     waiting_for_spawn = False
-            
+
             # Movimento blocchi
             for block in blocks:
 
@@ -436,20 +436,20 @@ def main():
                             update_leaderboard(player_name, score)
                             score_saved = True
                         game_state = GAME_OVER
-   
+
             # Difficoltà crescente
             level = score // 100 + 1
             block_speed = random.randint(2, 10) + level * 0.5
             spawn_delay = max(600, 1500 - level * 100)
-            
-            
+
+
             # Bottone pausa
             pygame.draw.rect(screen, GRAY, pause_button, border_radius=12)
 
             # Icona pausa (due linee)
             pygame.draw.rect(screen, WHITE, (pause_button.x + 15, pause_button.y + 12, 6, 25))
             pygame.draw.rect(screen, WHITE, (pause_button.x + 29, pause_button.y + 12, 6, 25))
-     
+
             # Disegno
             for block in blocks:
 
@@ -457,13 +457,13 @@ def main():
                     screen.blit(block_img, block["rect"])
                 else:
                     screen.blit(block_img_appiccicoso, block["rect"])
-                    
+
             screen.blit(player_img, player)
-            
+
             draw_text(f"Giocatore: {player_name}", font, WHITE, 20, 20)
             draw_text(f"Punteggio: {score}", font, WHITE, 20, 60)
             draw_text(f"Livello: {level}", font, WHITE, 20, 100)
-        
+
         elif game_state == PAUSED:
 
             # Disegna scena congelata
@@ -499,13 +499,13 @@ def main():
             draw_text(f"Giocatore: {player_name}", font, WHITE, WIDTH//2 - 120, 230)
             draw_text(f"Punteggio finale: {score}", font, WHITE, WIDTH//2 - 140, 270)
             draw_text("Premi ENTER per tornare al menu", font, WHITE, WIDTH//2 - 220, HEIGHT - 80)
-  
+
           # ===== CLASSIFICA =====
         elif game_state == LEADERBOARD:
 
             draw_text("CLASSIFICA", font_big, BLUE, WIDTH//2 - 150, 150)
             y_offset = 225
-            
+
             for i in range(10):
 
                 if i < len(leaderboard):
@@ -529,8 +529,8 @@ def main():
             draw_text("Premi ESC per tornare al menu", font, WHITE, WIDTH//2 - 200, HEIGHT - 50)
 
         pygame.display.flip()
-       
+
 if __name__ == "__main__":
+    # PROF: No, mi spiace! Il gioco doveva partire invocando UNIVOCAMENTE la funzione main()!!!
     load_leaderboard()
     main()
-    
