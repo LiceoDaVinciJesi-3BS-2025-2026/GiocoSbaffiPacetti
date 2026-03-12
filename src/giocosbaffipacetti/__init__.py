@@ -3,6 +3,7 @@
 import pygame
 import random
 import sys
+from importlib.resources import files
 
 # Inizializza pygame e il sistema audio
 pygame.init()
@@ -20,7 +21,8 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SPACE JUMP")
 
 # Caricamento e ridimensionamento dello sfondo
-background_img = pygame.image.load("schermata_gioco.png").convert()
+schermata_gioco_path = files("giocosbaffipacetti") / "schermata_gioco.png" 
+background_img = pygame.image.load(schermata_gioco_path).convert()
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
 # Clock per gestire gli FPS
@@ -28,8 +30,10 @@ clock = pygame.time.Clock()
 FPS = 60
 
 # Suoni
-jump_sound = pygame.mixer.Sound("sound_jump.mp3")
-gameover_sound = pygame.mixer.Sound("sound_gameover.mp3")
+sound_jump_path = files("giocosbaffipacetti") / "sound_jump.mp3"
+jump_sound = pygame.mixer.Sound(sound_jump_path)
+gameover_sound_path = files("giocosbaffipacetti") / "sound_gameover.mp3"
+gameover_sound = pygame.mixer.Sound(gameover_sound_path)
 
 # Colori
 WHITE = (255, 255, 255)
@@ -80,7 +84,8 @@ gravity = 0.8
 jump_power = -13
 
 # Immagine del player
-player_img = pygame.image.load("alieno.png").convert_alpha()
+alieno_path = files("giocosbaffipacetti") / "alieno.png"
+player_img = pygame.image.load(alieno_path).convert_alpha()
 player_img = pygame.transform.scale(player_img, (player_width, player_height))
 on_ground = False
 
@@ -98,9 +103,12 @@ waiting_for_spawn = False
 next_spawn_time = random.randint(800, 2000)
 
 # Immagini blocchi
-block_img = pygame.image.load("ufo.png").convert_alpha()
+ufo_path = files("giocosbaffipacetti") / "ufo.png"
+block_img = pygame.image.load( ufo_path ).convert_alpha()
 block_img = pygame.transform.scale(block_img, (block_width, block_height))
-block_img_appiccicoso = pygame.image.load("ufo_appiccicoso.png").convert_alpha()
+
+ufo_app_path = files("giocosbaffipacetti") / "ufo_appiccicoso.png"
+block_img_appiccicoso = pygame.image.load( ufo_app_path ).convert_alpha()
 block_img_appiccicoso = pygame.transform.scale(block_img_appiccicoso, (block_width, block_height))
 
 # ===== PUNTEGGIO =====

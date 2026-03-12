@@ -1,0 +1,9 @@
+- Ho modificato i percorsi dei file per farli funzionare sul pacchetto
+
+- il gioco DEVE partire se esegui SOLO la funzione main(): da voi servono 2 funzioni!!!
+
+- il gioco MANCA di spiegazioni (non si capisce bene all'inizio cosa devi fare e chi sei!)
+
+- la classifica NON è persistente (al secondo riavvio è vuota)
+
+
