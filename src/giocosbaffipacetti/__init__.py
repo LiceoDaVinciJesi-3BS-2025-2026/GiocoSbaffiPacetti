@@ -261,6 +261,9 @@ def main():
     global score, level, block_speed, spawn_delay
     global waiting_for_spawn, spawn_next_on_center, block_to_watch
     global score_saved, first_jump_done
+    
+    load_leaderboard()
+    
     while True:
         dt = clock.tick(FPS)
         screen.blit(background_img, (0, 0))
@@ -540,5 +543,4 @@ def main():
 
 if __name__ == "__main__":
     # PROF: No, mi spiace! Il gioco doveva partire invocando UNIVOCAMENTE la funzione main()!!!
-    load_leaderboard()
     main()
