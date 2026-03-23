@@ -1,5 +1,6 @@
 # GIOCO SBAFFI E PACETTI
 
+# libreria Standard
 import pygame
 import random
 import sys

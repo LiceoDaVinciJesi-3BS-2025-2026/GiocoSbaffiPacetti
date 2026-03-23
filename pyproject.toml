@@ -1,5 +1,5 @@
 [project]
-name = "giocosbaffipacetti"
+name = "SPACE_JUMP"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -9,8 +9,12 @@ dependencies = [
 ]
 
 [project.scripts]
-giocosbaffipacetti = "giocosbaffipacetti:main"
+SPACE_JUMP = "SPACE_JUMP:main"
 
 [build-system]
 requires = ["uv_build>=0.9.26,<0.10.0"]
 build-backend = "uv_build"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
