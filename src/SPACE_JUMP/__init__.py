@@ -4,7 +4,14 @@
 import pygame
 import random
 import sys
-from importlib.resources import files
+
+from platformdirs import PlatformDirs
+
+from .resources import *
+
+
+#
+dirs = PlatformDirs(__package__, ensure_exists=True)
 
 # Inizializza pygame e il sistema audio
 pygame.init()
@@ -22,7 +29,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SPACE JUMP")
 
 # Caricamento e ridimensionamento dello sfondo
-schermata_gioco_path = files("giocosbaffipacetti") / "schermata_gioco.png" 
+schermata_gioco_path = get_image("schermata_gioco.png") 
 background_img = pygame.image.load(schermata_gioco_path).convert()
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
@@ -31,9 +38,9 @@ clock = pygame.time.Clock()
 FPS = 60
 
 # Suoni
-sound_jump_path = files("giocosbaffipacetti") / "sound_jump.mp3"
+sound_jump_path = get_sound("sound_jump.mp3")
 jump_sound = pygame.mixer.Sound(sound_jump_path)
-gameover_sound_path = files("giocosbaffipacetti") / "sound_gameover.mp3"
+gameover_sound_path = get_sound("sound_gameover.mp3")
 gameover_sound = pygame.mixer.Sound(gameover_sound_path)
 
 # Colori
@@ -85,7 +92,7 @@ gravity = 0.8
 jump_power = -13
 
 # Immagine del player
-alieno_path = files("giocosbaffipacetti") / "alieno.png"
+alieno_path = get_image("alieno.png")
 player_img = pygame.image.load(alieno_path).convert_alpha()
 player_img = pygame.transform.scale(player_img, (player_width, player_height))
 on_ground = False
@@ -104,11 +111,11 @@ waiting_for_spawn = False
 next_spawn_time = random.randint(800, 2000)
 
 # Immagini blocchi
-ufo_path = files("giocosbaffipacetti") / "ufo.png"
+ufo_path = get_image("ufo.png")
 block_img = pygame.image.load( ufo_path ).convert_alpha()
 block_img = pygame.transform.scale(block_img, (block_width, block_height))
 
-ufo_app_path = files("giocosbaffipacetti") / "ufo_appiccicoso.png"
+ufo_app_path = get_image("ufo_appiccicoso.png")
 block_img_appiccicoso = pygame.image.load( ufo_app_path ).convert_alpha()
 block_img_appiccicoso = pygame.transform.scale(block_img_appiccicoso, (block_width, block_height))
 
@@ -210,7 +217,7 @@ def load_leaderboard():
     global leaderboard
     leaderboard = []
     try:
-        with open("classifica.txt", "r") as f:
+        with open(dirs.user_data_dir + "classifica.txt", "r") as f:
             for line in f:
                 line = line.strip()
                 if "," in line:
@@ -221,7 +228,7 @@ def load_leaderboard():
 
 # SALVATAGGIO CLASSIFICA
 def save_leaderboard():
-    with open("classifica.txt", "w") as f:
+    with open(dirs.user_data_dir + "classifica.txt", "w") as f:
         for name, score in leaderboard:
             f.write(f"{name},{score}\n")
 
