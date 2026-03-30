@@ -62,6 +62,7 @@ DARK_OVERLAY = (0, 0, 0, 150)
 
 # pulsante classifica
 leaderboard_button = pygame.Rect(WIDTH//2 - 100, 450, 200, 50)
+tutorial_button = pygame.Rect(WIDTH//2 - 100, 520, 200, 50)
 
 # Stati gioco
 MENU = 0
@@ -69,6 +70,7 @@ PLAYING = 1
 GAME_OVER = 2
 PAUSED = 3
 LEADERBOARD = 4
+TUTORIAL = 5
 game_state = MENU
 last_block_spawned = None
 
@@ -304,7 +306,9 @@ def main():
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if leaderboard_button.collidepoint(event.pos):
                         game_state = LEADERBOARD
-
+                    if tutorial_button.collidepoint(event.pos):
+                        game_state = TUTORIAL
+                        
             # ===== PLAYING =====
             elif game_state == PLAYING:
 
@@ -349,7 +353,13 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         game_state = MENU
+                        
+            # ===== ISTRUZIONI ===== 
+            elif game_state == TUTORIAL:
 
+                            if event.type == pygame.KEYDOWN:
+                                if event.key == pygame.K_ESCAPE:
+                                    game_state = MENU
         # ===== MENU =====
         if game_state == MENU:
             draw_text("SPACE JUMP", font_big, BLUE, WIDTH//2 - 140, 150)
@@ -359,6 +369,8 @@ def main():
             draw_text("Premi ENTER per iniziare", font, WHITE, WIDTH//2 - 180, 380)
             pygame.draw.rect(screen, BLUE, leaderboard_button, border_radius=12)
             draw_text("CLASSIFICA", font, WHITE, leaderboard_button.x + 20, leaderboard_button.y + 12.5)
+            pygame.draw.rect(screen, BLUE, tutorial_button, border_radius=12)
+            draw_text("ISTRUZIONI", font, WHITE, tutorial_button.x + 25, tutorial_button.y + 12.5)
 
         # ===== GIOCO =====
         elif game_state == PLAYING:
@@ -547,8 +559,27 @@ def main():
                 y_offset += 40
             draw_text("Premi ESC per tornare al menu", font, WHITE, WIDTH//2 - 200, HEIGHT - 50)
 
+        # ===== TUTORIAL SCREEN =====
+        elif game_state == TUTORIAL:
+            draw_text("COME GIOCARE", font_big, BLUE, WIDTH//2 - 160, 100)
+            
+            istruzioni = [
+                "- Usa la SPACEBAR per saltare sui blocchi",
+                "- Gli UFO normali si muovono sempre",
+                "- Gli UFO ricoperti di melma si fermano quando ci sali sopra",
+                "- Non cadere nel vuotoooo!",
+                "- Più sali, più il gioco diventa veloce",
+            ]
+            
+            y_inst = 220
+            for linea in istruzioni:
+                draw_text(linea, font, WHITE, WIDTH//2 - 300, y_inst)
+                y_inst += 50
+                
+            draw_text("Durante il gioco premi P o il tasto in alto a destra per mettere in pausa", font, WHITE, WIDTH//2 - 475, HEIGHT - 200)
+            draw_text("Premi ESC per tornare al menu", font, WHITE, WIDTH//2 - 200, HEIGHT - 100)
+
         pygame.display.flip()
 
 if __name__ == "__main__":
-    # PROF: No, mi spiace! Il gioco doveva partire invocando UNIVOCAMENTE la funzione main()!!!
     main()
