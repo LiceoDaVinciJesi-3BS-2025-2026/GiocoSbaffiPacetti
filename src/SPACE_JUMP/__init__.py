@@ -7,7 +7,7 @@ import sys
 
 from platformdirs import PlatformDirs
 
-from .resources import *
+from SPACE_JUMP.resources import *
 
 
 #
