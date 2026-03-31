@@ -1,4 +1,12 @@
-# GIOCO SBAFFI E PACETTI
+# SPACE_JUMP  
+
+# fai saltare l'alieno sopra gli ufo per salire più in alto possibile
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Riccardo Sbaffi <sbaffiric@gmail.com>
+# Melissa Pacetti <melissapacetti246@gmail.com>
 
 # libreria Standard
 import pygame
